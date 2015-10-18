@@ -6,9 +6,10 @@ function love.load()
     gameCanvas = love.graphics.newCanvas(love.window.getWidth(), love.window.getHeight())
     name = ""
     newPoint()
-    room = "name"
+
     blink = 0
-    love.graphics.setColor(255, 0, 0)
+    math.randomseed(os.time())
+    roomName()
     love.graphics.setBackgroundColor(0, 0, 0)
 end
 
@@ -24,8 +25,8 @@ function love.update(dt)
             point.Y = point.Y - math.sin(math.rad(point.Direction)) * dt * point.Speed
             point.Score = point.Score + math.floor(math.abs(point.X - point.OldX) + math.abs(point.Y - point.OldY))
             love.window.setTitle("Score: " .. point.Score)
-            local r, g, b, a = gameCanvas:getPixel(point.X, point.Y)
-            if r > 0 then
+            local r, g, b = gameCanvas:getPixel(point.X, point.Y)
+            if r + g + b > 0 then
                 local highscoreName = (string.len(name) > 0) and name or "<no name>"
                 highscore.add(highscoreName, point.Score)
                 highscore.save()
@@ -68,7 +69,7 @@ function love.keypressed(key, unicode)
     end
 
     if key == "f2" then
-        room = "name"
+        roomName()
     end
 
     if room == "name" then
@@ -83,7 +84,7 @@ function love.keypressed(key, unicode)
             end
         end
         if key == "return" then
-            newGame()
+            roomGame()
         end
     elseif room == "game" then
         if key == "left" and point.Direction ~= 0 then
@@ -107,7 +108,7 @@ function love.keypressed(key, unicode)
         end
     elseif room == "highscore" then
         if key == "return" then
-            newGame()
+            roomName()
         end
     end
 end
@@ -127,17 +128,52 @@ function newPoint()
         OldX = love.window.getWidth() / 2,
         OldY = love.window.getHeight() / 2,
         Speed = 160,
-        Direction = 0,
+        Direction = 1,
         Started = false,
         Score = 0
     }
 end
 
-function newGame()
+function roomGame()
     room = "game"
     gameCanvas:clear()
     love.graphics.setCanvas(gameCanvas)
     love.graphics.rectangle("line", 0, 0, love.window.getWidth(), love.window.getHeight())
     love.graphics.setCanvas()
     newPoint()
+end
+
+function roomName()
+    room = "name"
+    love.graphics.setColor(fromHSL(math.random(256), 255, 192, 255))
+end
+
+function fromHSV(h, s, v, a)
+    if s <= 0 then return v, v, v, a end
+    h, s, v = h / 256 * 6, s / 255, v / 255
+    local c = v * s
+    local x = (1 - math.abs((h % 2) - 1)) * c
+    local m, r, g, b = (v - c), 0, 0, 0
+    if h < 1 then r, g, b = c, x, 0
+    elseif h < 2 then r, g, b = x, c, 0
+    elseif h < 3 then r, g, b = 0, c, x
+    elseif h < 4 then r, g, b = 0, x, c
+    elseif h < 5 then r, g, b = x, 0, c
+    else r, g, b = c, 0, x
+    end return (r + m) * 255, (g + m) * 255, (b + m) * 255, a
+end
+
+function fromHSL(h, s, l, a)
+    if s <= 0 then return l, l, l, a end
+    h, s, l = h / 256 * 6, s / 255, l / 255
+    local c = (1 - math.abs(2 * l - 1)) * s
+    local x = (1 - math.abs(h % 2 - 1)) * c
+    local m, r, g, b = (l - .5 * c), 0, 0, 0
+    if h < 1 then r, g, b = c, x, 0
+    elseif h < 2 then r, g, b = x, c, 0
+    elseif h < 3 then r, g, b = 0, c, x
+    elseif h < 4 then r, g, b = 0, x, c
+    elseif h < 5 then r, g, b = x, 0, c
+    else r, g, b = c, 0, x
+    end return (r + m) * 255, (g + m) * 255, (b + m) * 255, a
 end
