@@ -1,3 +1,2 @@
-.idea/
-dot-dash.iml
-pkg/
+pkg/*
+*.swp
